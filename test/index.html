@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeCrimson</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'maroon': '#800000',
+                        'maroon-light': '#B30000',
+                        'maroon-dark': '#660000',
+                    },
+                    animation: {
+                        'gradient': 'gradient 8s ease infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                        'slide-up': 'slide-up 0.5s ease-out',
+                        'fade-in': 'fade-in 0.6s ease-out',
+                        'sound-wave': 'sound-wave 1.2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(128, 0, 0, 0.3)' },
+                            '50%': { boxShadow: '0 0 40px rgba(128, 0, 0, 0.6)' },
+                        },
+                        'slide-up': {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        'fade-in': {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        'sound-wave': {
+                            '0%, 100%': { transform: 'scaleY(0.2)', transformOrigin: 'bottom' },
+                            '50%': { transform: 'scaleY(1)', transformOrigin: 'bottom' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .progress-label { position: relative; margin-top: 0.5rem; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .gradient-bg {
+            background: linear-gradient(-45deg, #800000, #B30000, #660000, #8B0000);
+            background-size: 400% 400%;
+            animation: gradient 8s ease infinite;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(128, 0, 0, 0.1) 0%, transparent 70%);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        .data-viz-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw-line 2s ease-out forwards;
+        }
+
+        @keyframes draw-line {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .risk-meter {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .risk-meter-circle {
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(128, 0, 0, 0.4);
+            border-radius: 50%;
+            animation: float-particle 4s ease-in-out infinite;
+        }
+
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0; }
+            50% { transform: translate(var(--tx), var(--ty)) scale(1.5); opacity: 1; }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 via-red-50 to-gray-100 font-sans">
+    <script>
+        const BASE_URL = 'https://fadlike-elias-nonnoumenally.ngrok-free.dev';
+        const RISK_LEVEL = 60;
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <div id="particles-container" class="fixed inset-0 pointer-events-none z-0"></div>
+    <header class="glass-effect border-b border-white/30 shadow-lg backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+               <div class="flex items-center space-x-3 animate-slide-up">
+    <div class="w-12 h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-xl shadow-lg flex items-center justify-center animate-pulse-glow">
+        <img src="CodeCrimsonLogo.png" alt="Your Logo" class="w-7 h-7">
+    </div>
+    <div>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-maroon to-maroon-light bg-clip-text text-transparent">CodeCrimson</h1>
+                        <p class="text-sm text-gray-600">Fast analysis for faster, safer care.</p>
+                    </div>
+                </div>
+                <div id="clock" class="text-right hidden md:block">
+                    <p class="text-lg font-bold text-gray-800">--:--:--</p>
+                    <p class="text-xs text-gray-500">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="progress-bar-container"></div>
+    <main class="max-w-7xl mx-auto px-6 py-10 relative z-10">
+        <div id="content-area"></div>
+    </main>
+    <footer class="glass-effect border-t border-white/30 mt-20 relative z-10">
+        <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-3">About CodeCrimson</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        AI-powered maternal health monitoring system designed to predict and prevent postpartum hemorrhage through intelligent data analysis.
+                    </p>
+                </div>
+        </div>
+    </footer>
+    <script>
+        // --- PARTICLES ANIMATION ---
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.setProperty('--tx', `${(Math.random() - 0.5) * 100}px`);
+                particle.style.setProperty('--ty', `${(Math.random() - 0.5) * 100}px`);
+                particle.style.animationDelay = `${Math.random() * 4}s`;
+                container.appendChild(particle);
+            }
+        }
+
+        // --- GLOBAL STATE ---
+        let state = {
+            step: 'upload',
+            file: null,
+            extractedData: null,
+            rawOcrText: '',
+            isProcessing: false,
+            riskData: null,
+            isGeneratingReport: false,
+            userLocation: null,
+            nearestBanks: null,
+            isLoadingBanks: false,
+            isOtMonitoring: false // <-- NEW STATE
+        };
+        let currentSlide = 0;
+        let slideshowInterval;
+        let patientDatabase = []; // <-- Initialize patientDatabase
+
+        async function fetchPatients() {
+            try {
+                console.log('Fetching patients from:', `${BASE_URL}/api/patients`);
+                const response = await fetch(`${BASE_URL}/api/patients`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Server response:', text);
+                    throw new Error(`Server returned ${response.status}: ${text}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                if (data.success && data.patients) {
+                    patientDatabase = data.patients.map(p => ({
+                        ...p,
+                        risk_score: parseFloat(p.risk) || 0
+                    }));
+                    console.log('Processed patients:', patientDatabase);
+                } else {
+                    console.warn('Invalid data format received:', data);
+                    patientDatabase = [];
+                }
+            } catch (error) {
+                console.error('Error fetching patients:', error);
+                patientDatabase = [];
+            }
+            renderApp();
+        };
+
+        const slides = [
+            {
+                icon: 'Zap',
+                title: 'Instant OCR Extraction',
+                description: 'Advanced AI extracts key medical data from reports in seconds, eliminating manual entry errors.',
+                color: 'from-yellow-400 to-orange-500'
+            },
+            {
+                icon: 'TrendingUp',
+                title: 'Predictive Analysis',
+                description: 'Machine learning algorithms assess PPH risk factors to provide early warnings and intervention opportunities.',
+                color: 'from-green-400 to-emerald-500'
+            },
+            {
+                icon: 'Navigation',
+                title: 'Optimized Route Planning',
+                description: 'Smart logistics ensure blood reserves reach facilities via the fastest routes when every second counts.',
+                color: 'from-blue-400 to-indigo-500'
+            }
+        ];
+
+        // --- ICONS ---
+        const getIconSVG = (name, className = 'w-6 h-6', stroke = 'currentColor') => {
+            const icons = {
+                Upload: '<path d="M4 14.899L4 18c0 1.105.895 2 2 2h12c1.105 0 2-.895 2-2v-3.101M16 7.997L12 4 8 7.997M12 4v10"/>',
+                FileText: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v5h5"/>',
+                Clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+                Zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+                TrendingUp: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>',
+                Heart: '<path d="M19 14c1.49-1.46 3-3.26 3-5.5C22 6.5 20.5 5 18 5c-1.73 0-3.4 1-4.9 2.7l-1.1 1.2-1.1-1.2C6.4 6 4.73 5 3 5 1.5 5 0 6.5 0 8.5c0 2.24 1.5 4.04 3 5.5l9 9 9-9z"/>',
+                ArrowLeft: '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>',
+                Gauge: '<path d="M12 14c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/><path d="M12 14v8M18 5L22 1M1 22l4-4"/>',
+                Navigation: '<path d="M3 11l19-9-9 19-2-9z"/>',
+                AlertTriangle: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+                Droplet: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
+                Check: '<polyline points="20 6 9 17 4 12"/>',
+                Phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+                Mic: '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>' // <-- NEW ICON
+            };
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}">${icons[name] || ''}</svg>`;
+        };
+
+        // --- SLIDESHOW LOGIC ---
+        function rotateSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            const slideContainer = document.getElementById('slideshow-content');
+            if (slideContainer) {
+                slideContainer.style.opacity = '0';
+                slideContainer.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    slideContainer.innerHTML = renderSlideContent();
+                    slideContainer.style.opacity = '1';
+                    slideContainer.style.transform = 'translateY(0)';
+                    updateDots();
+                }, 300);
+            }
+        }
+
+        function renderSlideContent() {
+            const slide = slides[currentSlide];
+            return `
+                <div class="relative">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br ${slide.color} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg animate-float">
+                            ${getIconSVG(slide.icon, 'w-7 h-7 text-white')}
+                        </div>
+                        <h4 class="font-bold text-gray-800 text-lg">${slide.title}</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed pl-1">${slide.description}</p>
+                </div>
+            `;
+        }
+
+        function updateDots() {
+            const dotsContainer = document.getElementById('slide-dots');
+            if (dotsContainer) {
+                dotsContainer.innerHTML = slides.map((_, idx) =>
+                    `<div class="h-2 rounded-full transition-all duration-500 ${idx === currentSlide ? 'bg-maroon w-8' : 'bg-gray-300 w-2 hover:w-4'} cursor-pointer"></div>`
+                ).join('');
+            }
+        }
+
+        // --- NAVIGATION & CORE LOGIC ---
+        function goBack() {
+            if (state.step === 'findings') {
+                state.step = 'upload';
+            } else if (state.step === 'risk') {
+                state.step = 'findings';
+                state.isOtMonitoring = false; // Reset OT monitoring when going back
+            }
+            renderApp();
+        }
+
+        // --- GEOLOCATION & BLOOD BANK SEARCH ---
+        async function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation not supported'));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                        });
+                    },
+                    (error) => {
+                        reject(error);
+                    }
+                );
+            });
+        }
+
+        async function fetchNearestBanks(lat, lon, bloodType) {
+            try {
+                const response = await fetch(`${BASE_URL}/api/getNearestBanks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, // Added ngrok skip
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lon,
+                        bloodType: bloodType || 'A+',
+                        radius: 100
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch blood banks');
+                }
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error fetching blood banks:', error);
+                return null;
+            }
+        }
+
+        async function proceedToRiskAnalysis() {
+            state = { ...state, isProcessing: true, step: 'risk' };
+            renderApp();
+            try {
+                const data = state.extractedData || {};
+                const requestData = {
+                    age: parseFloat(data.age) || 0,
+                    systolic_bp: data.bloodPressure ? parseInt(data.bloodPressure.split('/')[0]) || 0 : 0,
+                    diastolic_bp: data.bloodPressure ? parseInt(data.bloodPressure.split('/')[1]) || 0 : 0,
+                    heart_rate: parseInt(data.heartRate) || 0,
+                    hemoglobin: parseFloat(data.hemoglobin) || 0,
+                    bmi: parseFloat(data.bmi) || 0,
+                    history_pph: data.historyOfPPH === 'Yes',
+                    placenta_previa: data.placentaPrevia === 'Yes',
+                    multiple_pregnancy: data.multiplePregnancy === 'Yes',
+                    previous_cesarean: data.historyOfCS === 'Yes',
+                    parity: parseInt(data.parity) || 0,
+                    platelet_count: parseInt(String(data.plateletCount).replace(/,/g, '')) || 0,
+                    gestational_age: parseInt(data.gestationalAge) || 0,
+                    mode_of_delivery: data.modeOfDelivery || '',
+                    fetal_weight: parseFloat(data.efw) || 0
+                };
+
+                console.log('Risk Analysis Request Data:', requestData);
+
+                const response = await fetch(`${BASE_URL}/api/risk-analysis`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Risk analysis failed');
+                }
+
+                if (!result.success || !result.riskAssessment) {
+                    throw new Error('Invalid response format from server');
+                }
+
+                state.riskData = result.riskAssessment;
+                state = { ...state, isProcessing: false };
+
+                // Check if high risk and get location
+                if (state.riskData.riskScore > RISK_LEVEL) {
+                    try {
+                        const location = await getUserLocation();
+                        state.userLocation = location;
+                        const bloodType = data.bloodType || 'A+';
+                        state = { ...state, isLoadingBanks: true };
+                        renderApp();
+                        const banksData = await fetchNearestBanks(location.lat, location.lon, bloodType);
+                        state.nearestBanks = banksData;
+                    } catch (geoError) {
+                        console.error('Geolocation error:', geoError);
+                    } finally {
+                        state = { ...state, isLoadingBanks: false };
+                    }
+                }
+            } catch (error) {
+                console.error("Risk Analysis Error:", error);
+                alert(`Risk analysis failed: ${error.message}`);
+                state = { ...state, isProcessing: false, step: 'findings' };
+            }
+            renderApp();
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            state = { ...state, file, isProcessing: true };
+            renderApp();
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch(`${BASE_URL}/api/ocr`, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: { 'ngrok-skip-browser-warning': 'true' } // Added ngrok skip
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.details || response.statusText);
+                }
+                const result = await response.json();
+                const findings = result.keyFindings || {};
+                state.extractedData = {
+                    patientId: findings['Patient ID'] || 'N/A',
+                    name: findings['Patient Name'] || 'N/A',
+                    age: findings['Age (years)'] || 'N/A',
+                    bloodType: findings['Blood Type'] || 'N/A',
+                    hemoglobin: findings['Hemoglobin (g/dL)'] || 'N/A',
+                    bloodPressure: `${findings['Systolic Blood Pressure (mmHg)'] || 'N/A'}/${findings['Diastolic Blood Pressure (mmHg)'] || 'N/A'}`,
+                    parity: findings['Parity'] || 'N/A',
+                    historyOfPPH: findings['History of PPH'] || 'N/A',
+                    historyOfCS: findings['History of Previous Cesarean'] || 'N/A',
+                    bmi: findings['Pre-pregnancy BMI'] || 'N/A',
+                    plateletCount: findings['Platelet Count (x10^3/μL)'] || 'N/A',
+                    heartRate: findings['Heart Rate (bpm)'] || 'N/A',
+                    placentaPrevia: findings['Placenta Previa'] || 'N/A',
+                    multiplePregnancy: findings['Multiple Pregnancy'] || 'N/A',
+                    efw: findings['Estimated Fetal Weight (kg)'] || 'N/A',
+                    gestationalAge: findings['Gestational Age (weeks)'] || 'N/A',
+                    modeOfDelivery: findings['Mode of Delivery'] || 'N/A',
+                    inducedLabor: findings['Induced Labor'] || 'N/A',
+                    anesthesiaType: findings['Anesthesia Type'] || 'N/A',
+                    expectedDeliveryDate: findings['Expected Delivery Date'] || 'N/A',
+                    location: findings['Hospital'] || 'N/A'
+                };
+                state.rawOcrText = result.extractedText || JSON.stringify(findings, null, 2);
+                state = { ...state, isProcessing: false, step: 'findings' };
+            } catch (error) {
+                console.error("API Error:", error);
+                alert(`File processing failed: ${error.message}.`);
+                state = { ...state, isProcessing: false, step: 'upload' };
+            }
+            renderApp();
+        }
+
+        function renderApp() {
+            renderProgressBar();
+            const contentArea = document.getElementById('content-area');
+            if (state.step === 'upload') {
+                contentArea.innerHTML = renderUploadSection();
+                if (slideshowInterval) clearInterval(slideshowInterval);
+                slideshowInterval = setInterval(rotateSlide, 4000);
+            } else {
+                if (slideshowInterval) {
+                    clearInterval(slideshowInterval);
+                    slideshowInterval = null;
+                }
+                if (state.step === 'findings') contentArea.innerHTML = renderFindingsSection();
+                else if (state.step === 'risk') contentArea.innerHTML = renderRiskSection();
+            }
+            attachEventListeners();
+        }
+
+        // --- NEW FUNCTION ---
+        async function toggleOtMonitoring() {
+            try {
+                if (!state.isOtMonitoring) {
+                    // Start monitoring
+                    const response = await fetch(`${BASE_URL}/api/start-monitoring`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        }
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.warning) {
+                        alert('⚠️ ALERT: Blood loss phrase detected! Notifying blood bank.');
+                    }
+
+                    state.isOtMonitoring = true;
+                } else {
+                    // Stop monitoring
+                    await fetch(`${BASE_URL}/api/stop-monitoring`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        }
+                    });
+                    
+                    state.isOtMonitoring = false;
+                }
+            } catch (error) {
+                console.error('Monitoring error:', error);
+                alert('Error with monitoring: ' + error.message);
+                state.isOtMonitoring = false;
+            }
+            renderApp();
+        }
+
+        function attachEventListeners() {
+            const uploadInput = document.getElementById('file-upload');
+            const analyzeBtn = document.getElementById('analyze-risk-btn');
+            const generateBtn = document.getElementById('generate-report-btn');
+            const otBtn = document.getElementById('ot-monitor-btn'); // <-- NEW
+            
+            if (uploadInput) uploadInput.addEventListener('change', handleFileUpload);
+            if (analyzeBtn) analyzeBtn.addEventListener('click', proceedToRiskAnalysis);
+            if (generateBtn) generateBtn.addEventListener('click', generateReport);
+            if (otBtn) otBtn.addEventListener('click', toggleOtMonitoring); // <-- NEW
+            
+            document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', goBack));
+        }
+
+        async function generateReport() {
+            try {
+                state = { ...state, isGeneratingReport: true };
+                renderApp();
+                const payload = {
+                    patientData: state.extractedData ? {
+                        "Age (years)": state.extractedData.age,
+                        "Systolic Blood Pressure (mmHg)": state.extractedData.bloodPressure?.split('/')?.[0],
+                        "Diastolic Blood Pressure (mmHg)": state.extractedData.bloodPressure?.split('/')?.[1],
+                        "Heart Rate (bpm)": state.extractedData.heartRate,
+                        "Hemoglobin (g/dL)": state.extractedData.hemoglobin,
+                        "Pre-pregnancy BMI": state.extractedData.bmi,
+                        "History of PPH": state.extractedData.historyOfPPH,
+                        "Placenta Previa": state.extractedData.placentaPrevia,
+                        "Multiple Pregnancy": state.extractedData.multiplePregnancy,
+                        "History of Previous Cesarean": state.extractedData.historyOfCS,
+                        "Parity": state.extractedData.parity,
+                        "Platelet Count (x10^3/μL)": state.extractedData.plateletCount,
+                        "Gestational Age (weeks)": state.extractedData.gestationalAge,
+                        "Mode of Delivery": state.extractedData.modeOfDelivery,
+                        "Estimated Fetal Weight (kg)": state.extractedData.efw
+                    } : {},
+                    riskAssessment: state.riskData || null
+                };
+                const res = await fetch(`${BASE_URL}/api/report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, // Added ngrok skip
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.details || err.error || res.statusText);
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'pph_risk_report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('Failed to generate report: ' + e.message);
+            } finally {
+                state = { ...state, isGeneratingReport: false };
+                renderApp();
+            }
+        }
+
+        function renderProgressBar() {
+            const steps = ['upload', 'findings', 'risk'], labels = ['Upload', 'Extract', 'Analyze'];
+            const currentIdx = steps.indexOf(state.step);
+            const stepsHtml = steps.map((s, idx) => `
+                <div class="flex items-center ${idx < steps.length - 1 ? 'flex-1' : ''}">
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${idx <= currentIdx ? 'bg-gradient-to-br from-maroon to-maroon-light border-maroon text-white shadow-lg scale-110' : 'bg-white border-gray-300 text-gray-400'} flex-shrink-0 font-bold">
+                                ${idx + 1}
+                            </div>
+                            ${idx <= currentIdx ? '<div class="absolute inset-0 rounded-full bg-maroon opacity-20 animate-ping"></div>' : ''}
+                        </div>
+                        <p class="text-sm font-semibold ml-3 transition-all duration-300 ${idx <= currentIdx ? 'text-maroon' : 'text-gray-400'}">${labels[idx]}</p>
+                    </div>
+                    ${idx < steps.length - 1 ? `<div class="flex-1 h-1 mx-4 rounded-full overflow-hidden bg-gray-200"><div class="h-full bg-gradient-to-r from-maroon to-maroon-light transition-all duration-700" style="width: ${idx < currentIdx ? '100%' : '0%'}"></div></div>` : ''}
+                </div>
+            `).join('');
+            document.getElementById('progress-bar-container').innerHTML = `<div class="glass-effect border-b border-white/30 shadow-lg backdrop-blur-md sticky top-16 z-40"><div class="max-w-4xl mx-auto px-6 py-5"><div class="flex items-center justify-between">${stepsHtml}</div></div></div>`;
+        }
+
+        // --- DASHBOARD COMPONENTS ---
+        const renderUploadCard = () => `
+            <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 p-8 text-center hover-lift animate-slide-up relative overflow-hidden" style="min-height: 500px;">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-maroon/10 to-transparent rounded-full -mr-20 -mt-20"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-maroon/10 to-transparent rounded-full -ml-16 -mb-16"></div>
+                <div class="relative z-10 h-full flex flex-col">
+                    <div class="mx-auto w-20 h-20 bg-gradient-to-br from-maroon to-maroon-light rounded-3xl flex items-center justify-center mb-6 shadow-xl animate-pulse-glow">
+                        ${getIconSVG('Upload', 'w-10 h-10 text-white')}
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">New Case Analysis</h3>
+                    <p class="text-gray-600 mb-6 text-sm">Upload a medical report to begin comprehensive PPH risk assessment.</p>
+                    <label class="inline-block mb-6">
+                        <input type="file" id="file-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" ${state.isProcessing ? 'disabled' : ''}/>
+                        <div class="px-8 py-4 text-white rounded-xl cursor-pointer font-bold inline-flex items-center space-x-3 transition-all duration-300 ${state.isProcessing ? 'bg-gray-400 cursor-wait' : 'bg-gradient-to-r from-maroon to-maroon-light hover:shadow-2xl hover:scale-105'}">
+                            ${state.isProcessing ? `${getIconSVG('Clock', 'w-6 h-6 animate-spin', 'white')}<span>Processing...</span>` : `${getIconSVG('Upload', 'w-6 h-6', 'white')}<span>Upload Report</span>`}
+                        </div>
+                    </label>
+                    <div class="text-xs text-gray-500 mb-8">
+                        <p class="mb-1">Supported formats: PDF, JPG, PNG</p>
+                        <p>Maximum file size: 10MB</p>
+                    </div>
+                    <div class="flex-1 mt-auto pt-8 border-t border-gray-200">
+                        <div id="slideshow-content" class="text-left transition-all duration-300" style="min-height: 120px;">
+                            ${renderSlideContent()}
+                        </div>
+                        <div id="slide-dots" class="flex justify-center space-x-2 mt-6">
+                            ${slides.map((_, idx) => `<div class="h-2 rounded-full transition-all duration-500 ${idx === currentSlide ? 'bg-maroon w-8' : 'bg-gray-300 w-2'} cursor-pointer"></div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        const renderPatientTable = () => {
+            const sortedPatients = [...patientDatabase].sort((a, b) => b.risk_score - a.risk_score);
+            const rows = sortedPatients.map((p, idx) => {
+                const risk = parseFloat(p.risk_score) || 0;
+                const status = risk > 70 ? 'High Risk' : risk > 40 ? 'Moderate Risk' : 'Low Risk';
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gradient-to-r hover:from-red-50 hover:to-transparent transition-all duration-300 animate-slide-up" style="animation-delay: ${idx * 0.1}s">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-800">${p.patient_id || `MH2024-${idx + 1}`}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700 font-medium">${p.name || `Patient ${idx + 1}`}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r ${risk > 70 ? 'from-red-500 to-red-600' : risk > 40 ? 'from-orange-400 to-orange-500' : 'from-green-400 to-green-500'} transition-all duration-1000" style="width: ${risk}%"></div>
+                                </div>
+                                <span class="text-sm font-bold ${risk > 70 ? 'text-red-600' : risk > 40 ? 'text-orange-500' : 'text-green-600'}">${risk.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${p.expected_delivery_date || 'N/A'}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-4 py-2 rounded-full text-xs font-bold inline-flex items-center space-x-1 ${risk > 70 ? 'bg-red-100 text-red-800' : risk > 40 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}">
+                                <span class="w-2 h-2 rounded-full ${risk > 70 ? 'bg-red-500' : risk > 40 ? 'bg-orange-500' : 'bg-green-500'} animate-pulse"></span>
+                                <span>${p.status || status}</span>
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            return `
+                <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 overflow-hidden hover-lift animate-fade-in">
+                    <div class="bg-gradient-to-r from-maroon to-maroon-light p-6">
+                        <h3 class="text-xl font-bold text-white flex items-center space-x-2">
+                            ${getIconSVG('AlertTriangle', 'w-6 h-6', 'white')}
+                            <span>High-Risk Patient Queue</span>
+                        </h3>
+                        <p class="text-red-100 text-sm mt-1">Real-time monitoring and prioritization</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        ${patientDatabase.length > 0 ? `
+                            <table class="min-w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Patient ID</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Risk Level</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">EDD</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        ` : `
+                            <div class="text-center py-12">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                    ${getIconSVG('AlertTriangle', 'w-8 h-8 text-gray-400')}
+                                </div>
+                                <p class="text-gray-500">No patient data available</p>
+                                <p class="text-sm text-gray-400 mt-1">Please check your connection or try again later</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- SECTION RENDERERS ---
+        function renderUploadSection() {
+            return `
+                <div class="mb-8 animate-fade-in">
+                    <div class="text-center mb-10">
+                        <h2 class="text-4xl font-bold text-gray-900 mb-3">Maternal Health Monitoring Dashboard</h2>
+                        <p class="text-lg text-gray-600">AI-powered PPH risk assessment and patient management</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        ${renderPatientTable()}
+                    </div>
+                    <div class="lg:col-span-1">
+                        ${renderUploadCard()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFindingsSection() {
+            const data = state.extractedData || {};
+            const rawOcrHtml = state.rawOcrText ? `
+                <div class="mb-8 animate-slide-up">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center space-x-2">
+                        ${getIconSVG('FileText', 'w-5 h-5 text-maroon')}
+                        <span>Raw OCR Output</span>
+                    </h3>
+                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-green-400 p-6 rounded-2xl border border-gray-700 shadow-2xl font-mono">
+                        <pre class="text-xs whitespace-pre-wrap break-all"><code>${state.rawOcrText}</code></pre>
+                    </div>
+                </div>` : '';
+            const renderDetails = (details, icon, title, colorClass) => {
+                const html = Object.entries(details).map(([label, value]) => !value || value === 'N/A/N/A' || value === 'N/A' ? '' : `
+                    <div class="flex justify-between py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 rounded px-2">
+                        <span class="text-gray-600 text-sm">${label}</span>
+                        <span class="font-bold text-gray-900 text-sm">${value}</span>
+                    </div>
+                `).join('');
+                return `
+                    <div class="p-6 glass-effect rounded-2xl border border-white/30 h-full hover-lift animate-slide-up shadow-xl">
+                        <div class="flex items-center space-x-3 mb-6 pb-4 border-b-2 ${colorClass}">
+                            <div class="w-10 h-10 bg-gradient-to-br ${colorClass.replace('border-', 'from-').replace('-500', '-400')} to-${colorClass.split('-')[1]}-600 rounded-xl flex items-center justify-center shadow-lg">
+                                ${getIconSVG(icon, 'w-5 h-5 text-white')}
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">${title}</h3>
+                        </div>
+                        <div class="space-y-1 text-sm">
+                            ${html}
+                        </div>
+                    </div>
+                `;
+            };
+            const patient = {
+                'Patient Name': data.name,
+                'ID': data.patientId,
+                'Age/Parity': `${data.age} yrs / P${data.parity}`,
+                'Facility': data.location
+            };
+            const clinical = {
+                'Blood Type': data.bloodType,
+                'Hemoglobin': data.hemoglobin && data.hemoglobin !== 'N/A' ? `${data.hemoglobin} g/dL` : 'N/A',
+                'Platelets': data.plateletCount && data.plateletCount !== 'N/A' ? `${data.plateletCount} x10³/μL` : 'N/A',
+                'Blood Pressure': data.bloodPressure,
+                'Heart Rate': data.heartRate && data.heartRate !== 'N/A' ? `${data.heartRate} bpm` : 'N/A',
+                'BMI': data.bmi
+            };
+            const obstetric = {
+                'Gestational Age': data.gestationalAge && data.gestationalAge !== 'N/A' ? `${data.gestationalAge} wks` : 'N/A',
+                'Fetal Weight': data.efw && data.efw !== 'N/A' ? `${data.efw} kg` : 'N/A',
+                'Placenta': data.placentaPrevia,
+                'Pregnancy': data.multiplePregnancy,
+                'PPH History': data.historyOfPPH,
+                'C-Section History': data.historyOfCS,
+                'Delivery Mode': data.modeOfDelivery,
+                'Labor': data.inducedLabor,
+                'Anesthesia': data.anesthesiaType,
+                'EDD': data.expectedDeliveryDate
+            };
+            return `
+                <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 p-8 animate-fade-in">
+                    <div class="flex items-center justify-between border-b-2 border-gray-200 pb-6 mb-8">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-maroon to-maroon-light rounded-2xl flex items-center justify-center shadow-lg">
+                                ${getIconSVG('FileText', 'w-7 h-7 text-white')}
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-bold text-gray-900">Extracted Findings</h2>
+                                <p class="text-sm text-gray-500 mt-1">Comprehensive patient data analysis</p>
+                            </div>
+                        </div>
+                        <button class="back-btn px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200 hover:scale-105 text-sm font-semibold inline-flex items-center space-x-2 transition-all duration-300 shadow-md">
+                            ${getIconSVG('ArrowLeft', 'w-4 h-4')}
+                            <span>Back</span>
+                        </button>
+                    </div>
+                    ${rawOcrHtml}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        ${renderDetails(patient, 'Heart', 'Patient Details', 'border-pink-500')}
+                        ${renderDetails(clinical, 'Droplet', 'Clinical Markers', 'border-red-500')}
+                        ${renderDetails(obstetric, 'AlertTriangle', 'Obstetric History', 'border-orange-500')}
+                    </div>
+                    <div class="mt-8 pt-6 border-t-2 border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center space-x-3 text-sm text-gray-600">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <span>Data extraction complete</span>
+                            </div>
+                        </div>
+                        <button id="analyze-risk-btn" class="px-8 py-4 bg-gradient-to-r from-maroon to-maroon-light text-white rounded-xl hover:shadow-2xl font-bold inline-flex items-center space-x-3 transition-all duration-300 hover:scale-105">
+                            ${getIconSVG('TrendingUp', 'w-6 h-6')}
+                            <span>Run Risk Analysis →</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBloodBankMap() {
+            if (state.isLoadingBanks) {
+                return `
+                    <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 p-8 mb-8 animate-fade-in">
+                        <div class="text-center py-8">
+                            <div class="animate-spin mx-auto w-12 h-12 border-4 border-maroon border-t-transparent rounded-full mb-4"></div>
+                            <p class="text-gray-600">Loading nearby blood banks...</p>
+                        </div>
+                    </div>
+                `;
+            }
+            if (!state.nearestBanks || !state.nearestBanks.success) {
+                return `
+                    <div class="glass-effect rounded-2xl shadow-2xl border border-red-300 p-8 mb-8 animate-fade-in bg-red-50">
+                        <div class="flex items-start space-x-3">
+                            ${getIconSVG('AlertTriangle', 'w-6 h-6 text-red-600 flex-shrink-0')}
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">High Risk Alert - Blood Bank Location Unavailable</h3>
+                                <p class="text-gray-700">Unable to retrieve nearby blood bank locations. Please enable location access or manually contact blood banks.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            const banks = state.nearestBanks.banks || [];
+            const patientLoc = state.nearestBanks.patient_location;
+            const bloodType = state.nearestBanks.blood_type;
+            const mapId = 'blood-bank-map-' + Date.now();
+            setTimeout(() => {
+                try {
+                    const mapElement = document.getElementById(mapId);
+                    if (!mapElement || mapElement._leaflet_id) return;
+                    const map = L.map(mapId).setView([patientLoc.lat, patientLoc.lon], 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    const patientIcon = L.divIcon({
+                        html: '<div style="background-color: #dc2626; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>',
+                        className: '',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    L.marker([patientLoc.lat, patientLoc.lon], {icon: patientIcon})
+                        .addTo(map)
+                        .bindPopup('<b>Patient Location</b><br>High Risk - Immediate Blood Access Required');
+                    banks.forEach((bank, idx) => {
+                        const bankIcon = L.divIcon({
+                            html: '<div style="background-color: #1e40af; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; font-weight: bold;">' + (idx + 1) + '</div>',
+                            className: '',
+                            iconSize: [28, 28],
+                            iconAnchor: [14, 14]
+                        });
+                        L.marker([bank.lat, bank.lon], {icon: bankIcon})
+                            .addTo(map)
+                            .bindPopup(`<b>${bank.name}</b><br>Distance: ${bank.distance_km} km<br>Units Available: ${bank.units_available}<br>Blood Type: ${bank.blood_type}`);
+                    });
+                    if (banks.length > 0) {
+                        const bounds = L.latLngBounds([[patientLoc.lat, patientLoc.lon]]);
+                        banks.forEach(bank => bounds.extend([bank.lat, bank.lon]));
+                        map.fitBounds(bounds, {padding: [50, 50]});
+                    }
+                } catch (error) {
+                    console.error('Map initialization error:', error);
+                }
+            }, 100);
+            return `
+                <div class="glass-effect rounded-2xl shadow-2xl border border-blue-300 p-8 mb-8 animate-fade-in bg-blue-50">
+                    <div class="flex items-center space-x-3 mb-6">
+                        ${getIconSVG('Navigation', 'w-8 h-8 text-blue-600')}
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Nearest Blood Banks</h3>
+                            <p class="text-sm text-gray-600 mt-1">Found ${banks.length} blood bank(s) with ${bloodType} within ${state.nearestBanks.radius_km}km</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="rounded-xl overflow-hidden shadow-lg border-2 border-white" style="height: 400px;">
+                            <div id="${mapId}" style="width: 100%; height: 100%;"></div>
+                        </div>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                            ${banks.length > 0 ? banks.map((bank, idx) => `
+                                <div class="bg-white rounded-xl p-4 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
+                                            ${idx + 1}
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-bold text-gray-900 mb-1 truncate">${bank.name}</h4>
+                                            <div class="space-y-1 text-xs text-gray-600">
+                                                <div class="flex items-center space-x-1">
+                                                    ${getIconSVG('Navigation', 'w-3 h-3')}
+                                                    <span>${bank.distance_km} km away</span>
+                                                </div>
+                                                <div class="flex items-center space-x-1">
+                                                    ${getIconSVG('Droplet', 'w-3 h-3')}
+                                                    <span><b>${bank.units_available}</b> units ${bank.blood_type === 'All Types' ? 'total' : 'of ' + bank.blood_type} available</span>
+                                                </div>
+                                                ${bank.inventory ? `
+                                                    <div class="text-xs text-gray-500 mt-1 pl-4">
+                                                        ${Object.entries(bank.inventory).map(([type, units]) => `${type}: ${units}`).join(', ')}
+                                                    </div>
+                                                ` : ''}
+                                                ${bank.expiry_dates && bank.expiry_dates.length > 0 ? `
+                                                    <div class="flex items-center space-x-1">
+                                                        ${getIconSVG('Clock', 'w-3 h-3')}
+                                                        <span>Expires: ${bank.expiry_dates[0]}</span>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onclick="alertBloodBank('${bank.phone}')" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:shadow-lg font-bold inline-flex items-center space-x-2 transition-all duration-300 hover:scale-105">
+                                        ${getIconSVG('Phone', 'w-4 h-4')}
+                                        <span>Call Now</span>
+                                    </button>
+                                </div>
+                            `).join('') : `
+                                <div class="text-center py-12">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        ${getIconSVG('AlertTriangle', 'w-8 h-8 text-gray-400')}
+                                    </div>
+                                    <p class="text-gray-500">No blood banks found nearby</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
+                        <div class="flex items-start space-x-2">
+                            ${getIconSVG('AlertTriangle', 'w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5')}
+                            <p class="text-sm text-gray-700">
+                                <strong>Critical Action:</strong> Contact the nearest blood bank immediately to reserve ${bloodType} blood. Patient is at HIGH RISK for PPH.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function alertBloodBank(phone) {
+            try {
+                const data = state.extractedData || {};
+                const response = await fetch(`${BASE_URL}/api/alert-blood-bank`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, // Added ngrok skip
+                    body: JSON.stringify({
+                        phone: phone,
+                        patientName: data.name,
+                        bloodType: data.bloodType,
+                        riskLevel: state.riskData.riskLevel
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Alert call initiated to the blood bank! Call SID: ${result.callSid}`);
+                } else {
+                    alert(`Failed to initiate call: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function renderPreparednessChecklist(riskLevel) {
+            let items = [];
+            let title = 'Standard Preparedness';
+            let iconColor = 'text-green-600';
+            let gradient = 'from-green-400 to-green-500';
+            if (riskLevel === 'HIGH') {
+                title = 'Immediate Preparedness Checklist (High Risk)';
+                iconColor = 'text-red-600';
+                gradient = 'from-red-400 to-red-600';
+                items = [
+                    'Notify senior obstetrician and anesthetist <strong>immediately</strong>.',
+                    'Prepare operating room for potential emergency surgery.',
+                    'Cross-match and reserve <strong>4+ units</strong> of packed red blood cells (PRBCs).',
+                    'Ensure availability of FFP, platelets, and cryoprecipitate.',
+                    'Secure <strong>two large-bore IV accesses</strong> (16-gauge or larger).',
+                    'Prepare PPH emergency cart (uterotonics, tranexamic acid).',
+                    'Alert blood bank of high-risk patient status.',
+                    'Confirm immediate availability of neonatal resuscitation team.'
+                ];
+            } else if (riskLevel === 'MODERATE') {
+                title = 'Enhanced Preparedness Checklist (Moderate Risk)';
+                iconColor = 'text-orange-600';
+                gradient = 'from-orange-400 to-orange-500';
+                items = [
+                    'Notify delivery suite team of moderate risk status.',
+                    'Ensure <strong>2 units</strong> of PRBCs are on hold (group & screen).',
+                    'Secure at least <strong>one large-bore IV access</strong> (18-gauge or larger).',
+                    'Check and stock PPH emergency cart.',
+                    'Ensure ready availability of uterotonics (Oxytocin, Misoprostol).',
+                    'Briefly review PPH protocol with the attending team.'
+                ];
+            } else {
+                title = 'Standard Preparedness Checklist (Low Risk)';
+                iconColor = 'text-green-600';
+                gradient = 'from-green-400 to-green-500';
+                items = [
+                    'Follow standard delivery protocols.',
+                    'Ensure routine PPH cart is stocked and available.',
+                    'Active management of third stage of labor (AMTSL).',
+                    'Ensure routine IV access is in place.'
+                ];
+            }
+            const listItems = items.map(item => `
+                <li class="flex items-start space-x-3 py-2">
+                    <div class="w-5 h-5 flex-shrink-0 mt-1 flex items-center justify-center rounded-full bg-gradient-to-br ${gradient} shadow-md">
+                        ${getIconSVG('Check', 'w-3 h-3 text-white')}
+                    </div>
+                    <span class="text-sm text-gray-700">${item}</span>
+                </li>
+            `).join('');
+            return `
+                <div class="glass-effect rounded-2xl border border-white/30 p-8 hover-lift shadow-lg animate-slide-up mb-8" style="animation-delay: 0.2s">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
+                        ${getIconSVG('AlertTriangle', `w-6 h-6 ${iconColor}`)}
+                        <span>${title}</span>
+                    </h3>
+                    <ul class="space-y-2">
+                        ${listItems}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // --- NEW FUNCTION ---
+        function renderOtMonitoringBox() {
+            return `
+                <div class="glass-effect rounded-2xl shadow-lg border border-white/30 p-6 mb-8 bg-gradient-to-br from-gray-900 to-gray-800 animate-fade-in">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                            ${getIconSVG('Mic', 'w-6 h-6 text-white')}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-lg font-bold text-white">Live OT Audio Monitoring</h4>
+                            <p class="text-sm text-green-300">Status: Audio is being monitored</p>
+                        </div>
+                        <div class="flex items-end h-10 space-x-1.5">
+                            <div class="w-2 bg-green-400 rounded-full animate-sound-wave" style="animation-delay: 0s; height: 100%;"></div>
+                            <div class="w-2 bg-green-400 rounded-full animate-sound-wave" style="animation-delay: 0.2s; height: 100%;"></div>
+                            <div class="w-2 bg-green-400 rounded-full animate-sound-wave" style="animation-delay: 0.4s; height: 100%;"></div>
+                            <div class="w-2 bg-green-400 rounded-full animate-sound-wave" style="animation-delay: 0.6s; height: 100%;"></div>
+                            <div class="w-2 bg-green-400 rounded-full animate-sound-wave" style="animation-delay: 0.8s; height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRiskSection() {
+            if (state.isProcessing) {
+                return `
+                    <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 p-8 animate-fade-in">
+                        <div class="text-center py-20">
+                            <div class="relative mx-auto w-32 h-32 mb-8">
+                                <div class="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-full opacity-20 animate-ping"></div>
+                                <div class="relative w-32 h-32 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center shadow-xl">
+                                    ${getIconSVG('Clock', 'w-16 h-16 text-purple-600 animate-spin')}
+                                </div>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-4">Analyzing Risk Factors...</h3>
+                            <p class="text-gray-600 max-w-md mx-auto">AI model processing patient data</p>
+                        </div>
+                    </div>
+                `;
+            }
+            const risk = state.riskData || {};
+            const riskScore = risk.riskScore || 0;
+            const riskLevel = risk.riskLevel || 'UNKNOWN';
+            const modelType = risk.modelType || 'N/A';
+            const topFactors = risk.topRiskFactors || [];
+            let riskColorClass, riskBgClass, riskBorderClass, riskGradient, strokeColor;
+            if (riskLevel === 'HIGH') {
+                riskColorClass = 'text-red-600';
+                riskBgClass = 'bg-red-100';
+                riskBorderClass = 'border-red-500';
+                riskGradient = 'from-red-500 to-red-600';
+                strokeColor = '#ef4444';
+            } else if (riskLevel === 'MODERATE') {
+                riskColorClass = 'text-orange-600';
+                riskBgClass = 'bg-orange-100';
+                riskBorderClass = 'border-orange-500';
+                riskGradient = 'from-orange-400 to-orange-500';
+                strokeColor = '#fb923c';
+            } else {
+                riskColorClass = 'text-green-600';
+                riskBgClass = 'bg-green-100';
+                riskBorderClass = 'border-green-500';
+                riskGradient = 'from-green-400 to-green-500';
+                strokeColor = '#22c55e';
+            }
+            const radius = 80;
+            const circumference = 2 * Math.PI * radius;
+            const progress = (riskScore / 100) * circumference;
+            // Add this to your OT monitoring button HTML
+            const otButtonHtml = `
+                <button 
+                    id="ot-monitor-btn" 
+                    class="px-6 py-3 ${
+                        state.isOtMonitoring 
+                            ? 'bg-red-100 text-red-700 animate-pulse' 
+                            : 'bg-blue-100 text-blue-700'
+                    } rounded-xl hover:scale-105 text-sm font-semibold inline-flex items-center space-x-2 transition-all duration-300 shadow-md"
+                >
+                    ${getIconSVG(state.isOtMonitoring ? 'Mic' : 'Zap', 'w-4 h-4')}
+                    <span>${state.isOtMonitoring ? 'Stop Monitoring' : 'Start OT Monitoring'}</span>
+                </button>
+            `;
+            return `
+                <div class="glass-effect rounded-2xl shadow-2xl border border-white/30 p-8 animate-fade-in">
+                    <div class="flex items-center justify-between border-b-2 border-gray-200 pb-6 mb-8">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br ${riskGradient} rounded-2xl flex items-center justify-center shadow-lg animate-pulse-glow">
+                                ${getIconSVG('Gauge', 'w-7 h-7 text-white')}
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-bold text-gray-900">PPH Risk Analysis</h2>
+                                <p class="text-sm text-gray-500 mt-1">Powered by ${modelType} Model</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            ${otButtonHtml}
+                            <button class="back-btn px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200 hover:scale-105 text-sm font-semibold inline-flex items-center space-x-2 transition-all duration-300 shadow-md">
+                                ${getIconSVG('ArrowLeft', 'w-4 h-4')}
+                                <span>Back</span>
+                            </button>
+                        </div>
+                        </div>
+                    
+                    ${state.isOtMonitoring ? renderOtMonitoringBox() : ''} <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="glass-effect rounded-2xl border border-white/30 p-8 text-center hover-lift shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center justify-center space-x-2">
+                                ${getIconSVG('Gauge', 'w-6 h-6 text-maroon')}
+                                <span>Overall Risk Score</span>
+                            </h3>
+                            <div class="relative mx-auto mb-8" style="width: 220px; height: 220px;">
+                                <svg class="transform -rotate-90" width="220" height="220">
+                                    <circle cx="110" cy="110" r="${radius}" stroke="#f3f4f6" stroke-width="16" fill="none"/>
+                                    <circle cx="110" cy="110" r="${radius}" stroke="${strokeColor}" stroke-width="16" fill="none"
+                                            stroke-dasharray="${circumference}"
+                                            stroke-dashoffset="${circumference - progress}"
+                                            stroke-linecap="round"
+                                            style="transition: stroke-dashoffset 2s ease-out; filter: drop-shadow(0 0 8px ${strokeColor}40);"/>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <div class="text-4xl font-bold ${riskColorClass} mb-1" style="line-height: 1;">
+                                    ${riskScore.toFixed(1)}%
+                                </div>
+                                <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                                    ${riskLevel} RISK
+                                </div>
+                                </div>
+                            </div>
+                            <div class="inline-flex items-center space-x-2 px-8 py-3 bg-gradient-to-r ${riskGradient} text-white rounded-full font-bold shadow-xl hover:scale-105 transition-transform duration-300">
+                                ${getIconSVG('AlertTriangle', 'w-5 h-5', 'white')}
+                                <span>${riskLevel} Risk Level</span>
+                            </div>
+                        </div>
+                        <div class="glass-effect rounded-2xl border border-white/30 p-8 hover-lift shadow-lg">
+                            <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center space-x-2">
+                                ${getIconSVG('TrendingUp', 'w-6 h-6 text-maroon')}
+                                <span>Key Risk Factors</span>
+                            </h3>
+                            <div class="space-y-5">
+                                ${topFactors.length > 0 ? topFactors.map((factor, idx) => {
+                                    const value = factor.importance !== undefined ? factor.importance : factor.points;
+                                    const maxValue = modelType === 'ML' ? Math.max(...topFactors.map(f => f.importance || 0)) : 100;
+                                    const percentage = (value / maxValue) * 100;
+                                    let displayValue;
+                                    if (modelType === 'ML') {
+                                        const totalImportance = topFactors.reduce((sum, f) => sum + (f.importance || 0), 0);
+                                        const relativeImportance = (value / totalImportance) * 100;
+                                        displayValue = relativeImportance.toFixed(1) + '%';
+                                    } else {
+                                        displayValue = value + ' pts';
+                                    }
+                                    return `
+                                        <div class="animate-slide-up hover:bg-gray-50 p-3 rounded-xl transition-all duration-300" style="animation-delay: ${idx * 0.1}s">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center space-x-3">
+                                                    <span class="w-7 h-7 rounded-full bg-gradient-to-br ${riskGradient} text-white text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-md">${idx + 1}</span>
+                                                    <span class="text-sm font-semibold text-gray-800">${factor.factor}</span>
+                                                </div>
+                                                <span class="text-sm font-bold ${riskColorClass} ml-2">${displayValue}</span>
+                                            </div>
+                                            <div class="relative h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner ml-10">
+                                                <div class="absolute inset-0 h-full bg-gradient-to-r ${riskGradient} rounded-full transition-all duration-1000 shadow-sm"
+                                                     style="width: ${percentage}%"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('') : '<div class="text-center py-12"><div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">${getIconSVG("AlertTriangle", "w-8 h-8 text-gray-400")}</div><p class="text-gray-500 text-sm">No risk factors identified</p></div>'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="stat-card p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl border border-blue-200 hover-lift">
+                            <div class="flex items-center space-x-3 mb-3">
+                                ${getIconSVG('Droplet', 'w-8 h-8 text-blue-600')}
+                                <h4 class="font-bold text-gray-800">Blood Reserve</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">${riskLevel === 'HIGH' ? 'Immediate cross-match and reserve 4+ units' : riskLevel === 'MODERATE' ? 'Reserve 2-4 units blood' : 'Standard protocols sufficient'}</p>
+                        </div>
+                        <div class="stat-card p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl border border-purple-200 hover-lift">
+                            <div class="flex items-center space-x-3 mb-3">
+                                ${getIconSVG('Heart', 'w-8 h-8 text-purple-600')}
+                                <h4 class="font-bold text-gray-800">Monitoring</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">${riskLevel === 'HIGH' ? 'Continuous monitoring required' : riskLevel === 'MODERATE' ? 'Enhanced monitoring recommended' : 'Routine monitoring adequate'}</p>
+                        </div>
+                        <div class="stat-card p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 hover-lift">
+                            <div class="flex items-center space-x-3 mb-3">
+                                ${getIconSVG('Navigation', 'w-8 h-8 text-green-600')}
+                                <h4 class="font-bold text-gray-800">Facility Level</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">${riskLevel === 'HIGH' ? 'Tertiary care center with ICU' : riskLevel === 'MODERATE' ? 'Secondary care with blood bank' : 'Primary care adequate'}</p>
+                        </div>
+                    </div>
+                    ${renderPreparednessChecklist(riskLevel)}
+                    ${riskScore > RISK_LEVEL ? renderBloodBankMap() : ''}
+                    <div class="mt-8 pt-6 border-t-2 border-gray-200">
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-orange-500 p-6 rounded-lg mb-6">
+                            <div class="flex items-start space-x-3">
+                                ${getIconSVG('AlertTriangle', 'w-6 h-6 text-orange-500 flex-shrink-0')}
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-2">Clinical Action Required</h4>
+                                    <p class="text-sm text-gray-700 leading-relaxed">
+                                        ${riskLevel === 'HIGH'
+                                            ? 'This patient is at HIGH risk for PPH. Immediate intervention planning required. Ensure blood products are available, senior obstetrician is notified, and delivery is planned at a facility with comprehensive emergency obstetric care.'
+                                            : riskLevel === 'MODERATE'
+                                            ? 'This patient has MODERATE risk factors. Preventive measures should be implemented, including active management of third stage labor and availability of oxytocics.'
+                                            : 'This patient has LOW risk for PPH. Standard delivery protocols apply with routine precautions.'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-500">
+                                Analysis completed using ${modelType} model
+                            </div>
+                            <button id="generate-report-btn" class="px-8 py-4 bg-gradient-to-r from-maroon to-maroon-light text-white rounded-xl hover:shadow-2xl font-bold inline-flex items-center space-x-3 transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed" ${state.isGeneratingReport ? 'disabled' : ''}>
+                                ${state.isGeneratingReport ? getIconSVG('Clock', 'w-6 h-6 animate-spin') : getIconSVG('FileText', 'w-6 h-6')}
+                                <span>${state.isGeneratingReport ? 'Generating...' : 'Generate Report'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- INITIALIZATION ---
+        const updateClock = () => {
+            const now = new Date();
+            const timeEl = document.querySelector('#clock p:first-child');
+            const dateEl = document.querySelector('#clock p:last-child');
+            if (timeEl && dateEl) {
+                timeEl.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                dateEl.textContent = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        };
+
+        window.onload = () => {
+            createParticles();
+            fetchPatients();
+            updateClock();
+            setInterval(updateClock, 1000);
+        };
+    </script>
+</body>
+</html>
